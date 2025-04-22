@@ -1,22 +1,27 @@
-/* General styles */
+/* General Styles */
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Arial', sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f4f4f4;
+  background-color: #f8f8f8;
 }
 
+/* App container */
 .app {
-  max-width: 900px;
-  margin: 50px auto;
-  padding: 20px;
-  background-color: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 15px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
+/* Title */
 h1 {
-  text-align: center;
-  margin-bottom: 30px;
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #333;
 }
 
 /* Tabs */
@@ -27,12 +32,18 @@ h1 {
 }
 
 .tab {
-  background-color: #f0f0f0;
-  padding: 10px 20px;
-  border: 1px solid #ddd;
+  background-color: #eee;
+  padding: 15px 25px;
   margin-right: 10px;
+  border-radius: 30px;
   cursor: pointer;
-  font-weight: bold;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.tab:hover {
+  background-color: #ddd;
 }
 
 .tab.active {
@@ -40,137 +51,72 @@ h1 {
   color: white;
 }
 
-/* Section styling */
+/* Upload Section */
 .upload-section {
-  margin-bottom: 30px;
+  margin-top: 30px;
 }
 
-.upload-section h2 {
-  margin-bottom: 20px;
-}
-
-.upload-section input[type="file"] {
-  display: block;
-  margin-bottom: 20px;
-}
-
-.upload-section label {
-  display: block;
-  margin-bottom: 10px;
-}
-
-.upload-section input[type="range"], .upload-section input[type="number"] {
+/* Drag and Drop Zone */
+.dropzone {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #fafafa;
+  border-radius: 12px;
+  border: 2px solid #ddd;
+  height: 250px;
   width: 100%;
-  margin-bottom: 20px;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.dropzone:hover {
+  background-color: #f0f0f0;
+}
+
+/* Upload Text */
+.dropzone p {
+  font-size: 16px;
+  color: #666;
+}
+
+/* Uploaded Preview (image/video) */
+.uploaded-image, .uploaded-video {
+  display: block;
+  max-width: 100%;
+  margin-top: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 button {
   background-color: #007bff;
   color: white;
-  padding: 10px 20px;
+  padding: 12px 30px;
+  border-radius: 30px;
   border: none;
-  cursor: pointer;
   font-size: 16px;
-  margin-top: 10px;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: background-color 0.3s ease;
 }
 
 button:hover {
   background-color: #0056b3;
 }
 
-/* Image and Video Outputs */
-img, video {
-  display: block;
-  margin-top: 20px;
-  max-width: 100%;
-}
-
-
-.app {
-  font-family: Arial, sans-serif;
-  margin: 20px;
-}
-
-.tabs {
-  display: flex;
-  margin-bottom: 20px;
-}
-
-.tab {
-  padding: 10px;
-  cursor: pointer;
-  background-color: #f4f4f4;
-  border: 1px solid #ddd;
-  margin-right: 10px;
-}
-
-.tab.active {
-  background-color: #ddd;
-}
-
-.upload-section {
-  margin-bottom: 20px;
-}
-
-.upload-section input[type="file"] {
-  margin-bottom: 10px;
-}
-
-.upload-section label {
-  margin-right: 10px;
-}
-
-.upload-section button {
-  padding: 10px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  cursor: pointer;
+button.delete {
+  background-color: #ff3b3b;
+  padding: 8px 20px;
+  font-size: 14px;
   margin-top: 10px;
 }
 
-.upload-section button:hover {
-  background-color: #45a049;
+button.delete:hover {
+  background-color: #e02e2e;
 }
 
+/* Result Section */
 .result-section {
-  margin-top: 20px;
-}
-
-.uploaded-image, .detected-image, .uploaded-video, .detected-video {
-  max-width: 100%;
-  max-height: 500px;
-  margin-top: 10px;
-}
-
-
-/* Loading spinner styles */
-.loading-spinner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 18px;
-  color: #666;
-  margin-top: 20px;
-}
-
-/* Add some animation for the spinner if you like */
-.loading-spinner::after {
-  content: "...";
-  animation: dot-blink 1s infinite step-end;
-}
-
-@keyframes dot-blink {
-  0% {
-    content: "...";
-  }
-  33% {
-    content: "..";
-  }
-  66% {
-    content: ".";
-  }
-  100% {
-    content: "...";
-  }
+  margin-top: 30px;
 }
