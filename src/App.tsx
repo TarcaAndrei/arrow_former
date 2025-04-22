@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import JSZip from 'jszip';
+import { Button, Checkbox, FormControlLabel, FormGroup, Grid, Slider, Typography, Box, CircularProgress, Tab, Tabs, Radio, RadioGroup, FormControl, FormLabel, Paper } from '@mui/material';
 import './App.css';
 
 const App: React.FC = () => {
@@ -20,8 +21,9 @@ const App: React.FC = () => {
     const [modelSelector, setModelSelector] = useState<string>('small');
     const [selectedClasses, setSelectedClasses] = useState<string[]>(allClasses);
     const [selectedTab, setSelectedTab] = useState<'image' | 'video'>('image');
-    const [isProcessingVideo, setIsProcessingVideo] = useState<boolean>(false);
+    const [isProcessing, setIsProcessing] = useState<boolean>(false); // for loading state
 
+    // Handlers for file change
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -36,14 +38,16 @@ const App: React.FC = () => {
         }
     };
 
-    const handleConfidenceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setConfidence(parseFloat(event.target.value));
+    // Handlers for sliders
+    const handleConfidenceChange = (event: Event, newValue: number | number[]) => {
+        setConfidence(newValue as number);
     };
 
-    const handleFpsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setFps(parseInt(event.target.value));
+    const handleFpsChange = (event: Event, newValue: number | number[]) => {
+        setFps(newValue as number);
     };
 
+    // Handlers for selections
     const handleClassChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         setSelectedClasses((prev) =>
@@ -55,11 +59,14 @@ const App: React.FC = () => {
         setModelSelector(event.target.value);
     };
 
+    // Image detection logic
     const handleImageDetect = async () => {
         if (!imageFile) {
             alert('Please upload an image file');
             return;
         }
+
+        setIsProcessing(true); // Start loading state
 
         const formData = new FormData();
         formData.append('image', imageFile);
@@ -71,23 +78,49 @@ const App: React.FC = () => {
         });
 
         try {
-            const response = await axios.post('https://your-backend-endpoint/detect/image/', formData, {
+            const response = await axios.post('https://8001-01jpcsmf3nnqwv3x61p99v1nh7.cloudspaces.litng.ai/detect/image/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
-                responseType: 'blob',
+                responseType: 'arraybuffer', // Expecting a binary response (zip file)
             });
-            const imageURL = URL.createObjectURL(response.data);
+
+            // Create a blob from the received data (which is a zip file)
+            const zipData = new Blob([response.data], { type: 'application/zip' });
+
+            // Load the zip file using JSZip
+            const zip = await JSZip.loadAsync(zipData);
+
+            // Extract the image from the zip (assuming the image is named 'output_image.png')
+            const imageFile = zip.file('output_image.png');
+            if (!imageFile) {
+                throw new Error('output_image.png not found in the zip');
+            }
+
+            // Convert the image file to a Blob and then to a URL for display
+            const imageBlob = await imageFile.async('blob');
+            const imageURL = URL.createObjectURL(imageBlob);
             setImageOutput(imageURL);
+
+            // If the backend also returns a zip with annotations, create a download link for the annotations
+            const annotationZipBlob = new Blob([response.data], { type: 'application/zip' });
+            const zipURL = URL.createObjectURL(annotationZipBlob);
+            setZipDownloadLink(zipURL);
+
+            setIsProcessing(false); // End loading state
         } catch (error) {
             console.error('Error detecting image:', error);
             alert('Error processing image');
+            setIsProcessing(false); // End loading state
         }
     };
 
+    // Video detection logic
     const handleVideoDetect = async () => {
         if (!videoFile) {
             alert('Please upload a video file');
             return;
         }
+
+        setIsProcessing(true); // Start loading state
 
         const formData = new FormData();
         formData.append('video', videoFile);
@@ -99,10 +132,8 @@ const App: React.FC = () => {
             formData.append('clase_interes', cls);
         });
 
-        setIsProcessingVideo(true);
-
         try {
-            const response = await axios.post('https://your-backend-endpoint/detect/video/', formData, {
+            const response = await axios.post('https://8001-01jpcsmf3nnqwv3x61p99v1nh7.cloudspaces.litng.ai/detect/video/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
                 responseType: 'blob',
             });
@@ -112,7 +143,7 @@ const App: React.FC = () => {
             if (!videoEntry) {
                 console.error('output_video.mp4 not found inside zip');
                 alert('Processed video missing in response');
-                setIsProcessingVideo(false);
+                setIsProcessing(false); // End loading state
                 return;
             }
 
@@ -126,160 +157,174 @@ const App: React.FC = () => {
             setZipDownloadLink(zipURL);
 
             setVideoOutput(videoURL);
-            setIsProcessingVideo(false);
+            setIsProcessing(false); // End loading state
         } catch (error) {
             console.error('Error detecting video:', error);
             alert('Error processing video');
-            setIsProcessingVideo(false);
+            setIsProcessing(false); // End loading state
         }
     };
 
     return (
         <div className="app">
-            <h1>Object Detection</h1>
+            <Typography variant="h3" align="center" gutterBottom sx={{ fontWeight: 700 }}>
+                Arrow Former
+            </Typography>
 
-            <div className="tabs">
-                <button className={`tab ${selectedTab === 'image' ? 'active' : ''}`} onClick={() => setSelectedTab('image')}>
-                    Image
-                </button>
-                <button className={`tab ${selectedTab === 'video' ? 'active' : ''}`} onClick={() => setSelectedTab('video')}>
-                    Video
-                </button>
-            </div>
+            <Box display="flex" justifyContent="center" mb={3}>
+                <Tabs value={selectedTab} onChange={(e, newTab) => setSelectedTab(newTab)} centered>
+                    <Tab label="Image" value="image" />
+                    <Tab label="Video" value="video" />
+                </Tabs>
+            </Box>
 
+            {/* Image Tab */}
             {selectedTab === 'image' && (
-                <div className="upload-section">
-                    <h2>Upload Image</h2>
+                <Paper elevation={3} sx={{ padding: 3 }}>
+                    <Typography variant="h6" mb={2} sx={{ fontWeight: 600 }}>
+                        Upload Image
+                    </Typography>
                     <input type="file" onChange={handleImageChange} accept="image/*" />
-                    {imageFile && <img className="uploaded-image" src={URL.createObjectURL(imageFile)} alt="Uploaded Image" />}
+                    {imageFile && <img src={URL.createObjectURL(imageFile)} alt="Uploaded Image" style={{ width: '100%', marginTop: '20px' }} />}
 
-                    <div className="slider-group">
-                        <label>Confidence: {confidence}</label>
-                        <input type="range" min="0" max="1" step="0.05" value={confidence} onChange={handleConfidenceChange} />
-                    </div>
+                    <FormControl fullWidth sx={{ marginTop: 2 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            Confidence: {confidence}
+                        </Typography>
+                        <Slider value={confidence} onChange={handleConfidenceChange} step={0.05} min={0} max={1} />
+                    </FormControl>
 
-                    <div className="checkbox-group">
-                        <label>Select Classes:</label>
+                    <FormGroup sx={{ marginTop: 2 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            Select Classes:
+                        </Typography>
                         {allClasses.map((cls) => (
-                            <label key={cls} className="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    value={cls}
-                                    checked={selectedClasses.includes(cls)}
-                                    onChange={handleClassChange}
-                                />
-                                {cls}
-                            </label>
+                            <FormControlLabel
+                                control={<Checkbox checked={selectedClasses.includes(cls)} onChange={handleClassChange} value={cls} />}
+                                label={cls}
+                                key={cls}
+                            />
                         ))}
-                    </div>
+                    </FormGroup>
 
-                    <div className="radio-group">
-                        <label>Model:</label>
-                        <label>
-                            <input
-                                type="radio"
-                                value="small"
-                                checked={modelSelector === 'small'}
-                                onChange={handleModelChange}
-                            />
-                            Small
-                        </label>
-                        <label>
-                            <input
-                                type="radio"
-                                value="base"
-                                checked={modelSelector === 'base'}
-                                onChange={handleModelChange}
-                            />
-                            Base
-                        </label>
-                    </div>
+                    <FormControl sx={{ marginTop: 2 }}>
+                        <FormLabel sx={{ fontWeight: 500 }}>Model:</FormLabel>
+                        <RadioGroup row value={modelSelector} onChange={handleModelChange}>
+                            <FormControlLabel value="small" control={<Radio />} label="Small" />
+                            <FormControlLabel value="base" control={<Radio />} label="Base" />
+                        </RadioGroup>
+                    </FormControl>
 
-                    <button onClick={handleImageDetect}>Detect Image</button>
+                    <Button variant="contained" color="primary" onClick={handleImageDetect} fullWidth sx={{ marginTop: 2 }}>
+                        Detect Image
+                    </Button>
+
+                    {isProcessing && (
+                        <Box display="flex" justifyContent="center" mt={2}>
+                            <CircularProgress />
+                        </Box>
+                    )}
 
                     {imageOutput && (
-                        <div className="result-section">
-                            <h3>Detected Image:</h3>
-                            <img className="detected-image" src={imageOutput} alt="Detected Image" />
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {selectedTab === 'video' && (
-                <div className="upload-section">
-                    <h2>Upload Video</h2>
-                    <input type="file" onChange={handleVideoChange} accept="video/*" />
-                    {videoFile && (
-                        <div>
-                            <h3>Uploaded Video</h3>
-                            <video className="uploaded-video" controls src={URL.createObjectURL(videoFile)} />
-                        </div>
-                    )}
-
-                    <div className="fps-group">
-                        <label>FPS: {fps}</label>
-                        <input type="number" min="5" max="60" value={fps} onChange={handleFpsChange} />
-                    </div>
-
-                    <div className="checkbox-group">
-                        <label>Select Classes:</label>
-                        {allClasses.map((cls) => (
-                            <label key={cls} className="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    value={cls}
-                                    checked={selectedClasses.includes(cls)}
-                                    onChange={handleClassChange}
-                                />
-                                {cls}
-                            </label>
-                        ))}
-                    </div>
-
-                    <div className="radio-group">
-                        <label>Model:</label>
-                        <label>
-                            <input
-                                type="radio"
-                                value="small"
-                                checked={modelSelector === 'small'}
-                                onChange={handleModelChange}
-                            />
-                            Small
-                        </label>
-                        <label>
-                            <input
-                                type="radio"
-                                value="base"
-                                checked={modelSelector === 'base'}
-                                onChange={handleModelChange}
-                            />
-                            Base
-                        </label>
-                    </div>
-
-                    <button onClick={handleVideoDetect} disabled={isProcessingVideo}>
-                        Detect Video
-                    </button>
-
-                    {isProcessingVideo && <div className="loading-spinner">Processing video... Please wait.</div>}
-
-                    {videoOutput && (
-                        <div className="result-section">
-                            <h3>Detected Video:</h3>
-                            <video className="detected-video" controls src={videoOutput} />
-                            <a href={videoDownloadLink} download="output_video.mp4">Download Video</a>
-                        </div>
+                        <Box mt={3}>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>Detected Image:</Typography>
+                            <img src={imageOutput} alt="Detected Image" style={{ width: '100%' }} />
+                        </Box>
                     )}
 
                     {zipDownloadLink && (
-                        <div className="result-section">
-                            <h3>Annotations:</h3>
-                            <a href={zipDownloadLink} download="annotations.zip">Download Annotations</a>
+                        <Box mt={2}>
+                            <a href={zipDownloadLink} download="output_files.zip">
+                                <Button variant="outlined">Download ZIP</Button>
+                            </a>
+                        </Box>
+                    )}
+                </Paper>
+            )}
+
+            {/* Video Tab */}
+            {selectedTab === 'video' && (
+                <Paper elevation={3} sx={{ padding: 3}}>
+                <div className="upload-section">
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>Upload Video</Typography>
+                    <input type="file" onChange={handleVideoChange} accept="video/*" />
+                    {videoFile && (
+                        <div>
+                            <Typography variant="body1" sx={{ fontWeight: 500, marginTop: 2 }}>Uploaded Video:</Typography>
+                            <video className="uploaded-video" controls src={URL.createObjectURL(videoFile)} style={{ width: '100%' }} />
                         </div>
                     )}
+
+                    <FormControl fullWidth sx={{ marginTop: 2 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            FPS: {fps}
+                        </Typography>
+                        <Slider value={fps} onChange={handleFpsChange} step={1} min={5} max={60} />
+                    </FormControl>
+
+                    <FormControl fullWidth sx={{ marginTop: 2 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            Confidence: {confidence}
+                        </Typography>
+                        <Slider value={confidence} onChange={handleConfidenceChange} step={0.05} min={0} max={1} />
+                    </FormControl>
+
+                    <FormGroup sx={{ marginTop: 2 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            Select Classes:
+                        </Typography>
+                        {allClasses.map((cls) => (
+                            <FormControlLabel
+                                control={<Checkbox checked={selectedClasses.includes(cls)} onChange={handleClassChange} value={cls} />}
+                                label={cls}
+                                key={cls}
+                            />
+                        ))}
+                    </FormGroup>
+
+                    <FormControl sx={{ marginTop: 2 }}>
+                        <FormLabel sx={{ fontWeight: 500 }}>Model:</FormLabel>
+                        <RadioGroup row value={modelSelector} onChange={handleModelChange}>
+                            <FormControlLabel value="small" control={<Radio />} label="Small" />
+                            <FormControlLabel value="base" control={<Radio />} label="Base" />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <Button variant="contained" color="primary" onClick={handleVideoDetect} fullWidth sx={{ marginTop: 2 }}>
+                        Detect Video
+                    </Button>
+
+                    {isProcessing && (
+                        <Box display="flex" justifyContent="center" mt={2}>
+                            <CircularProgress />
+                        </Box>
+                    )}
+
+                    <div className="result-section">
+                        {videoOutput && (
+                            <>
+                                <Typography variant="h6" sx={{ fontWeight: 600 }}>Detected Video:</Typography>
+                                <video className="detected-video" controls src={videoOutput} style={{ width: '100%' }} />
+                                {videoDownloadLink && (
+                                    <Box mt={2}>
+                                        <Button variant="outlined" href={videoDownloadLink} download="output_video.mp4">
+                                            Download Video
+                                        </Button>
+                                    </Box>
+                                )}
+                            </>
+                        )}
+
+                        {zipDownloadLink && (
+                            <Box mt={2}>
+                                <a href={zipDownloadLink} download="annotations.zip">
+                                    <Button variant="outlined">Download Annotations</Button>
+                                </a>
+                            </Box>
+                        )}
+                    </div>
                 </div>
+                </Paper>
             )}
         </div>
     );
