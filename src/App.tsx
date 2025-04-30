@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import JSZip from 'jszip';
-import { Button, Checkbox, FormControlLabel, FormGroup, Grid, Slider, Typography, Box, CircularProgress, Tab, Tabs, Radio, RadioGroup, FormControl, FormLabel, Paper } from '@mui/material';
+import { Button, Checkbox, FormControlLabel, FormGroup, Accordion, AccordionDetails, AccordionSummary, Grid, Slider, Typography, Box, CircularProgress, Tab, Tabs, Radio, RadioGroup, FormControl, FormLabel, Paper } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import './App.css';
 
 const App: React.FC = () => {
@@ -194,19 +195,33 @@ const App: React.FC = () => {
                         <Slider value={confidence} onChange={handleConfidenceChange} step={0.05} min={0} max={1} />
                     </FormControl>
 
-                    <FormGroup sx={{ marginTop: 2 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            Select Classes:
-                        </Typography>
-                        {allClasses.map((cls) => (
-                            <FormControlLabel
-                                control={<Checkbox checked={selectedClasses.includes(cls)} onChange={handleClassChange} value={cls} />}
-                                label={cls}
-                                key={cls}
-                            />
-                        ))}
-                    </FormGroup>
-
+                    <Accordion sx={{ marginTop: 2 }}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                Select Classes
+                            </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <FormGroup sx={{ marginTop: 2 }}>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    Select Classes:
+                                </Typography>
+                                {allClasses.map((cls) => (
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={selectedClasses.includes(cls)}
+                                                onChange={handleClassChange}
+                                                value={cls}
+                                            />
+                                        }
+                                        label={cls}
+                                        key={cls}
+                                    />
+                                ))}
+                            </FormGroup>
+                        </AccordionDetails>
+                    </Accordion>
                     <FormControl sx={{ marginTop: 2 }}>
                         <FormLabel sx={{ fontWeight: 500 }}>Model:</FormLabel>
                         <RadioGroup row value={modelSelector} onChange={handleModelChange}>
@@ -269,18 +284,33 @@ const App: React.FC = () => {
                         <Slider value={confidence} onChange={handleConfidenceChange} step={0.05} min={0} max={1} />
                     </FormControl>
 
-                    <FormGroup sx={{ marginTop: 2 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            Select Classes:
-                        </Typography>
-                        {allClasses.map((cls) => (
-                            <FormControlLabel
-                                control={<Checkbox checked={selectedClasses.includes(cls)} onChange={handleClassChange} value={cls} />}
-                                label={cls}
-                                key={cls}
-                            />
-                        ))}
-                    </FormGroup>
+                    <Accordion sx={{ marginTop: 2 }}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                Select Classes
+                            </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <FormGroup sx={{ marginTop: 2 }}>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    Select Classes:
+                                </Typography>
+                                {allClasses.map((cls) => (
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={selectedClasses.includes(cls)}
+                                                onChange={handleClassChange}
+                                                value={cls}
+                                            />
+                                        }
+                                        label={cls}
+                                        key={cls}
+                                    />
+                                ))}
+                            </FormGroup>
+                        </AccordionDetails>
+                    </Accordion>
 
                     <FormControl sx={{ marginTop: 2 }}>
                         <FormLabel sx={{ fontWeight: 500 }}>Model:</FormLabel>
